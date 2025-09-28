@@ -215,7 +215,7 @@ const AddRecord = () => {
       <span className='w-1.5 h-1.5 bg-blue-500 rounded-full'></span>
       Amount
       <span className='text-xs text-gray-400 dark:text-gray-500 ml-2 font-normal hidden sm:inline'>
-        Enter amount between ₹0 and ₹1,000
+        Enter amount between ₹0 and ₹10,000
       </span>
     </label>
     <div className='relative'>
@@ -227,7 +227,7 @@ const AddRecord = () => {
         name='amount'
         id='amount'
         min='0'
-        max='1000'
+        max='10000'
         step='1'
         value={amount}
         onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}

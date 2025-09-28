@@ -8,9 +8,18 @@ interface RawInsight {
   confidence?: number;
 }
 
+
+const openRouterKey = process.env.OPENROUTER_API_KEY;
+
+if (!openRouterKey) {
+  throw new Error(
+    '❌ Missing OPENROUTER_API_KEY. Please set it in your environment variables.'
+  );
+}
+
 const openai = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY,
+  apiKey: openRouterKey, // strictly OpenRouter key
   defaultHeaders: {
     'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     'X-Title': 'ExpenseTracker AI',
@@ -134,48 +143,76 @@ export async function generateExpenseInsights(
     ];
   }
 }
-
 export async function categorizeExpense(description: string): Promise<string> {
-    try {
-      const completion = await openai.chat.completions.create({
-        model: 'deepseek/deepseek-chat-v3-0324:free',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are an expense categorization AI. Categorize expenses into one of these categories: Food, Transportation, Entertainment, Shopping, Bills, Healthcare, Other. Respond with only the category name.',
-          },
-          {
-            role: 'user',
-            content: `Categorize this expense: "${description}"`,
-          },
-        ],
-        temperature: 0.1,
-        max_tokens: 20,
-      });
-  
-      const category = completion.choices[0].message.content?.trim();
-  
-      const validCategories = [
-        'Food',
-        'Transportation',
-        'Entertainment',
-        'Shopping',
-        'Bills',
-        'Healthcare',
-        'Other',
-      ];
-  
-      const finalCategory = validCategories.includes(category || '')
-        ? category!
-        : 'Other';
-      return finalCategory;
-    } catch (error) {
-      console.error('❌ Error categorizing expense:', error);
-      return 'Other';
-    }
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'deepseek/deepseek-chat-v3-0324',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are an expense categorization AI. Categorize expenses into one of these categories: Food, Transportation, Entertainment, Shopping, Bills, Healthcare, Other. Respond with only the category name.',
+        },
+        {
+          role: 'user',
+          content: `Categorize this expense: "${description}"`,
+        },
+      ],
+      temperature: 0.1,
+      max_tokens: 20,
+    });
+
+    let category = completion.choices[0].message.content?.trim() || '';
+
+    // --- Normalize AI output ---
+    category = category
+      .replace(/[`"'«»“”‘’:-]/g, '') // strip quotes, punctuation
+      .trim();
+
+    const validCategories = [
+      'Food',
+      'Transportation',
+      'Entertainment',
+      'Shopping',
+      'Bills',
+      'Healthcare',
+      'Other',
+    ];
+
+    // Direct or case-insensitive match
+    const found = validCategories.find(
+      (c) => c.toLowerCase() === category.toLowerCase()
+    );
+    if (found) return found;
+
+    // Fallback keyword rules (extra safety net)
+    const lower = description.toLowerCase();
+    if (
+      lower.includes('pizza') ||
+      lower.includes('restaurant') ||
+      lower.includes('grocery')
+    )
+      return 'Food';
+    if (lower.includes('uber') || lower.includes('bus') || lower.includes('train') || lower.includes('taxi'))
+      return 'Transportation';
+    if (lower.includes('netflix') || lower.includes('movie') || lower.includes('game'))
+      return 'Entertainment';
+    if (lower.includes('amazon') || lower.includes('shoes') || lower.includes('clothes'))
+      return 'Shopping';
+    if (lower.includes('bill') || lower.includes('electricity') || lower.includes('rent'))
+      return 'Bills';
+    if (lower.includes('doctor') || lower.includes('hospital') || lower.includes('medicine'))
+      return 'Healthcare';
+
+    // Default fallback
+    return 'Other';
+  } catch (error) {
+    console.error('❌ Error categorizing expense:', error);
+    return 'Other';
   }
-  
+}
+
+
 export async function generateAIAnswer(
   question: string,
   context: ExpenseRecord[]
@@ -228,4 +265,4 @@ export async function generateAIAnswer(
     console.error('❌ Error generating AI answer:', error);
     return "I'm unable to provide a detailed answer at the moment. Please try refreshing the insights or check your connection.";
   }
-}   
+}
