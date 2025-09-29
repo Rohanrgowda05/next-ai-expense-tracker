@@ -55,7 +55,7 @@ export async function generateExpenseInsights(
       date: expense.date,
     }));
 
-    const prompt = `Analyze the following expense data and provide 3-4 actionable financial insights. 
+    const prompt = `Analyze the following expense data and provide 3-4 actionable financial insights. All expenses are in Rupees 
     Return a JSON array of insights with this structure:
     {
       "type": "warning|info|success|tip",
@@ -77,12 +77,12 @@ export async function generateExpenseInsights(
     Return only valid JSON array, no additional text.`;
 
     const completion = await openai.chat.completions.create({
-      model: 'deepseek/deepseek-chat-v3-0324:free',
+      model: 'deepseek/deepseek-chat-v3-0324',
       messages: [
         {
           role: 'system',
           content:
-            'You are a financial advisor AI that analyzes spending patterns and provides actionable insights. Always respond with valid JSON only.',
+            'You are a financial advisor AI that analyzes spending patterns and provides actionable insights. Always respond with valid JSON only.All expenses are in Rupees',
         },
         {
           role: 'user',
@@ -239,12 +239,12 @@ export async function generateAIAnswer(
     Return only the answer text, no additional formatting.`;
 
     const completion = await openai.chat.completions.create({
-      model: 'deepseek/deepseek-chat-v3-0324:free',
+      model: 'deepseek/deepseek-chat-v3-0324',
       messages: [
         {
           role: 'system',
           content:
-            'You are a helpful financial advisor AI that provides specific, actionable answers based on expense data. Be concise but thorough.',
+            'You are a helpful financial advisor AI that provides specific, actionable answers based on expense data. Be concise but thorough.All expenses are in Rupees.',
         },
         {
           role: 'user',

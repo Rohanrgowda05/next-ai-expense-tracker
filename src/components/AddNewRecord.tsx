@@ -28,7 +28,7 @@ const AddRecord = () => {
     } else {
       setAlertMessage('Expense record added successfully!');
       setAlertType('success'); // Set alert type to success
-      formRef.current?.reset();
+       
       setAmount(50); // Reset the amount to the default value
       setCategory(''); // Reset the category
       setDescription(''); // Reset the description
